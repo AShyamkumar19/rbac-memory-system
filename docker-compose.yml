@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15
+    image: pgvector/pgvector:pg15
     container_name: rbac_postgres
     restart: unless-stopped
     environment:
@@ -14,8 +14,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./sql/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+      - ./sql/init.sql/init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./sql/schema.sql/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks:
       - rbac_network
     healthcheck:

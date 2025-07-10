@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS users (
     is_active BOOLEAN DEFAULT TRUE,
     phone_number VARCHAR(20),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_by UUID REFERENCES users(user_id) 
 );
 
@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS permissions (
     permission_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     permission_name VARCHAR(100) NOT NULL,
     permission_code VARCHAR(50) UNIQUE NOT NULL DEFAULT generate_unique_code('PERM-'),
+    resource_type VARCHAR(50) NOT NULL,
+    action VARCHAR(50) NOT NULL,
     scope access_scope_type DEFAULT 'own',
     description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
@@ -83,7 +85,7 @@ CREATE TABLE IF NOT EXISTS permissions (
 );
 
 -- User-Role assignments
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     role_id UUID REFERENCES roles(role_id) ON DELETE CASCADE,
     assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -95,7 +97,7 @@ CREATE TABLE user_roles (
 );
 
 -- Role-Permission mappings
-CREATE TABLE role_permissions (
+CREATE TABLE IF NOT EXISTS role_permissions (
     role_id UUID REFERENCES roles(role_id) ON DELETE CASCADE,
     permission_id UUID REFERENCES permissions(permission_id) ON DELETE CASCADE,
     granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -105,7 +107,7 @@ CREATE TABLE role_permissions (
 );
 
 -- Project team memberships
-CREATE TABLE project_members (
+CREATE TABLE IF NOT EXISTS project_members (
     project_id UUID REFERENCES projects(project_id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
     role_in_project VARCHAR(50) NOT NULL DEFAULT 'member',
@@ -121,7 +123,7 @@ CREATE TABLE project_members (
 -- ==========================================
 
 -- Short-term memory (session-based)
-CREATE TABLE rbac_session_memory (
+CREATE TABLE IF NOT EXISTS rbac_session_memory (
     session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     session_start TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -132,7 +134,7 @@ CREATE TABLE rbac_session_memory (
     agent_version VARCHAR(20),
     project_id UUID REFERENCES projects(project_id),
     department_id UUID REFERENCES departments(department_id),
-    security_level classification_level_type DEFAULT 'internal',
+    security_level classification_type DEFAULT 'internal',
     ip_address INET,
     user_agent TEXT,
     session_duration INTEGER, -- in seconds
@@ -142,7 +144,7 @@ CREATE TABLE rbac_session_memory (
 );
 
 -- Mid-term memory (summaries and decisions)
-CREATE TABLE rbac_mid_term_memory (
+CREATE TABLE IF NOT EXISTS rbac_mid_term_memory (
     summary_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     summary_text TEXT NOT NULL,
@@ -159,7 +161,7 @@ CREATE TABLE rbac_mid_term_memory (
     task_id UUID,
     project_id UUID REFERENCES projects(project_id),
     department_id UUID REFERENCES departments(department_id),
-    classification_level classification_level_type DEFAULT 'internal',
+    classification_level classification_type DEFAULT 'internal',
     access_scope access_scope_type DEFAULT 'department',
     retention_period INTEGER DEFAULT 90, -- days
     archived_at TIMESTAMP,
@@ -168,7 +170,7 @@ CREATE TABLE rbac_mid_term_memory (
 );
 
 -- Long-term memory (knowledge base)
-CREATE TABLE rbac_long_term_memory (
+CREATE TABLE IF NOT EXISTS rbac_long_term_memory (
     memory_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title VARCHAR(255),
     content TEXT NOT NULL,
@@ -185,7 +187,7 @@ CREATE TABLE rbac_long_term_memory (
     department_id UUID REFERENCES departments(department_id),
     created_by UUID REFERENCES users(user_id),
     last_modified_by UUID REFERENCES users(user_id),
-    classification_level classification_level_type DEFAULT 'internal',
+    classification_level classification_type DEFAULT 'internal',
     access_scope access_scope_type DEFAULT 'project',
     retention_period INTEGER DEFAULT 2555, -- days (7 years)
     keywords VARCHAR(100)[],
@@ -201,7 +203,7 @@ CREATE TABLE rbac_long_term_memory (
 );
 
 -- Memory access control lists
-CREATE TABLE memory_access_control (
+CREATE TABLE IF NOT EXISTS memory_access_control (
     access_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     memory_id UUID NOT NULL,
     memory_type memory_tier_type NOT NULL,
@@ -230,7 +232,7 @@ CREATE TABLE memory_access_control (
 -- ==========================================
 
 -- Comprehensive audit log
-CREATE TABLE rbac_audit_log (
+CREATE TABLE IF NOT EXISTS rbac_audit_log (
     audit_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(user_id),
     session_id UUID,
@@ -250,7 +252,7 @@ CREATE TABLE rbac_audit_log (
 );
 
 -- User sessions tracking
-CREATE TABLE user_sessions (
+CREATE TABLE IF NOT EXISTS user_sessions (
     session_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     session_token VARCHAR(255) UNIQUE NOT NULL,
@@ -267,7 +269,7 @@ CREATE TABLE user_sessions (
 );
 
 -- Security events
-CREATE TABLE security_events (
+CREATE TABLE IF NOT EXISTS security_events (
     event_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     event_type VARCHAR(50) NOT NULL,
     severity VARCHAR(20) NOT NULL DEFAULT 'medium',
@@ -429,8 +431,8 @@ WHERE pm.is_active = TRUE AND u.is_active = TRUE;
 ALTER TABLE departments ADD CONSTRAINT fk_departments_head 
     FOREIGN KEY (department_head_id) REFERENCES users(user_id);
 
-ALTER TABLE projects ADD CONSTRAINT fk_projects_manager 
-    FOREIGN KEY (project_manager_id) REFERENCES users(user_id);
+ALTER TABLE projects ADD CONSTRAINT fk_projects_lead 
+    FOREIGN KEY (project_lead_id) REFERENCES users(user_id);
 
 -- Row Level Security (RLS) - commented out for now, enable in production
 -- ALTER TABLE rbac_session_memory ENABLE ROW LEVEL SECURITY;
