@@ -56,7 +56,7 @@ class UserManager:
                 """
                 INSERT INTO users (
                     username, email, password_hash, first_name, last_name, 
-                    department_id, employee_id, classification_clearance, is_active
+                    department_id, employee_id, classification_level, is_active
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING user_id
                 """,
@@ -67,13 +67,14 @@ class UserManager:
                 user_create.last_name,
                 user_create.department_id,
                 employee_id,
-                user_create.classification_clearance.value,
+                user_create.classification_level.value,
                 user_create.is_active
             )
 
             return user_id
         except Exception as e:
             logger.error(f"Error creating user: {e}")
+            return None
 
     async def authenticate_user(self, username: str, password: str) -> Optional[Dict]:
         """Authenticate a user and return a user context"""
@@ -104,7 +105,7 @@ class UserManager:
             user = await self.db_client.fetchone(
                 """
                 SELECT u.user_id, u.username, u.email, u.first_name, u.last_name,
-                       u.department_id, u.employee_id, u.classification_clearance,
+                       u.department_id, u.employee_id, u.classification_level,
                        u.is_active, u.last_login, u.created_at, u.updated_at,
                        d.department_name
                 FROM users u
@@ -118,7 +119,7 @@ class UserManager:
                 logger.error(f"User not found: {user_id}")
                 return None
             
-            user_role = await self.db_client.fetchall(
+            user_roles = await self.db_client.fetchall(
                 """
                 SELECT r.role_name
                 FROM roles r
@@ -132,7 +133,7 @@ class UserManager:
                 user_id=user['user_id'],
                 employee_id=user['employee_id'],
                 department_name=user['department_name'],
-                roles=user_role['role_name']
+                roles=[role['role_name'] for role in user_roles]
             )
 
             return user_response
@@ -145,7 +146,7 @@ class UserManager:
         try:
             user = await self.db_client.fetchone(
                 """
-                SELECT user_id, username, email, department_id, classification_clearance
+                SELECT user_id, username, email, department_id, classification_level
                 FROM users 
                 WHERE user_id = $1 AND is_active = TRUE
                 """,
@@ -206,7 +207,7 @@ class UserManager:
                 permissions=permission_codes,
                 hierarchy_level=hierarchy_level,
                 project_ids=project_ids,
-                classification_level=classification_type(user['classification_clearance']) 
+                classification_level=classification_type(user['classification_level']) 
             )
         except Exception as e:
             logger.error(f"Error getting user context: {e}")

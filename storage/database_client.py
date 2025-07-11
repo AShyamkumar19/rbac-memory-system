@@ -14,7 +14,7 @@ class DatabaseClient:
 
     def __init__(self, database_url: str):
         self.database_url = database_url
-        self.pool = Optional[asyncpg.Pool] = None
+        self.pool: Optional[asyncpg.Pool] = None
         self._initialized = False
         self.logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class DatabaseClient:
             async with self.pool.acquire() as connection:
                 await connection.execute("SELECT 1")
 
-            self.initialize = True
+            self._initialized = True
             logger.info("Database connection pool initialized successfully")
 
         except Exception as e:
@@ -50,7 +50,7 @@ class DatabaseClient:
         """Close the database connection pool"""
         if self.pool:
             await self.pool.close()
-            self.initialize = False
+            self._initialized = False
             logger.info("Database connection pool closed successfully")
 
     @asynccontextmanager
@@ -76,13 +76,13 @@ class DatabaseClient:
         """Execute a query and return the result (It returns data like SELECT)"""
         async with self.get_connection() as connection:
             row = await connection.fetchrow(query, *args)
-            return row.to_dict() if row else None
+            return dict(row) if row else None
         
     async def fetchall(self, query: str, *args: Any) -> List[Dict]:
         """Fetch all rows from the db"""
         async with self.get_connection() as connection:
             rows = await connection.fetch(query, *args)
-            return [row.to_dict() for row in rows]
+            return [dict(row) for row in rows]
         
     async def fetchval(self, query: str, *args: Any) -> Any:
         """Fetch a single value from the db"""
@@ -92,7 +92,7 @@ class DatabaseClient:
         
     async def transaction(self):
         """Get db transaction context"""
-        if not self.initialized:
+        if not self._initialized:
             await self.initialize()
         return self.pool.acquire()
         
@@ -111,11 +111,13 @@ class DatabaseClient:
                         current_timestamp as server_time
                 """)
                 
+                stats_dict = dict(stats)
+                
                 return {
                     "status": "healthy",
-                    "database_size": stats["db_size"],
-                    "active_connections": stats["active_connections"],
-                    "server_time": stats["server_time"]
+                    "database_size": stats_dict["db_size"],
+                    "active_connections": stats_dict["active_connections"],
+                    "server_time": stats_dict["server_time"]
                 }
         except Exception as e:
             logger.error(f"Database health check failed: {e}")

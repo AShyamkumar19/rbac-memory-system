@@ -46,6 +46,7 @@ class UserBase(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=100)
     is_active: bool = Field(default=True)
     department_id: Optional[uuid.UUID] = None
+    employee_id: Optional[str] = None
     classification_level: classification_type = Field(default=classification_type.internal)
 
 class UserCreate(UserBase):

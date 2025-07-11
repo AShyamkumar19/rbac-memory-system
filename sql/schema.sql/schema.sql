@@ -49,6 +49,10 @@ CREATE TABLE IF NOT EXISTS users (
     hire_date DATE,
     is_active BOOLEAN DEFAULT TRUE,
     phone_number VARCHAR(20),
+    classification_level classification_type DEFAULT 'internal',
+    failed_login_attempts INTEGER DEFAULT 0,
+    account_locked_until TIMESTAMP WITH TIME ZONE,
+    last_login TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     created_by UUID REFERENCES users(user_id) 
