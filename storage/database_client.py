@@ -59,13 +59,17 @@ class DatabaseClient:
         if not self.pool:
             raise RuntimeError("Database connection pool not initialized")
         
+        connection = None
         try:
             connection = await self.pool.acquire()
             yield connection
-            logger.info("Connection released back to pool")
         except Exception as e:
             logger.error(f"Error getting connection from pool: {e}")
             raise
+        finally:
+            if connection:
+                await self.pool.release(connection)
+                logger.debug("Connection released back to pool")
 
     async def execute(self, query: str, *args: Any) -> str:
         """Execute a query and return the result (It doens't return data like INSERT, UPDATE, DELETE)"""

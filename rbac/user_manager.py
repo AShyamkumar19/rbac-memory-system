@@ -131,9 +131,18 @@ class UserManager:
 
             user_response = UserResponse(
                 user_id=user['user_id'],
+                username=user['username'],
+                email=user['email'],
+                first_name=user['first_name'],
+                last_name=user['last_name'],
+                is_active=user['is_active'],
+                department_id=user['department_id'],
                 employee_id=user['employee_id'],
+                classification_level=user['classification_level'],
                 department_name=user['department_name'],
-                roles=[role['role_name'] for role in user_roles]
+                roles=[role['role_name'] for role in user_roles],
+                created_at=user['created_at'],
+                updated_at=user['updated_at']
             )
 
             return user_response

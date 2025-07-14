@@ -23,7 +23,7 @@ async def login(request: LoginRequest, db_client: DatabaseClient = Depends(get_d
                 detail="Invalid username or password",
             )
         
-        new_token = create_access_token({"user_id": str(user_context.user_id)})
+        new_token = create_access_token({"user_id": str(user_context['user_id'])})
         return LoginResponse(
             access_token=new_token,
             token_type="bearer",
@@ -53,14 +53,17 @@ async def get_current_user(user_context: UserContext = Depends(authenticate_user
             )
         
         return UserProfileResponse(
-            user_id=str(user_data.user_id),
+            user_id=user_data.user_id,
             username=user_data.username,
             email=user_data.email,
             first_name=user_data.first_name,
             last_name=user_data.last_name,
             department_id=str(user_data.department_id) if user_data.department_id else None,
+            department_name=user_data.department_name,
             roles=user_data.roles,
             classification_level=user_data.classification_level,
+            is_active=user_data.is_active,
+            last_login=None  # This field is not in the current query
         )
     except HTTPException:
         raise

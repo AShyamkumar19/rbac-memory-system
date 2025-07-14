@@ -1,9 +1,10 @@
 import asyncio
 import httpx
 import json
+import uuid
 from storage.database_client import db_client
 from rbac.user_manager import UserManager
-from models.base_models import UserCreate, ClassificationLevel
+from models.base_models import UserCreate, classification_type
 
 BASE_URL = "http://localhost:8000"
 
@@ -15,18 +16,23 @@ async def setup_test_user():
         await db_client.initialize()
         user_manager = UserManager(db_client)
         
-        # Create test user
+        # Generate unique username to avoid conflicts
+        unique_id = str(uuid.uuid4())[:8]
+        username = f"authtest_{unique_id}"
+        
+        # Create test user with unique username
         test_user = UserCreate(
-            username="authtest",
-            email="authtest@example.com",
+            username=username,
+            email=f"authtest_{unique_id}@example.com",
             first_name="Auth",
             last_name="Test",
             password="testpassword123",
-            classification_clearance=ClassificationLevel.INTERNAL
+            classification_level=classification_type.internal
         )
         
         user_id = await user_manager.create_user(test_user)
         print(f"Test user created: {user_id}")
+        print(f"  Username: {username}")
         return test_user
         
     except Exception as e:
@@ -81,7 +87,7 @@ async def test_auth_endpoints():
             print(f"   Name: {profile_data['first_name']} {profile_data['last_name']}")
             print(f"   Email: {profile_data['email']}")
             print(f"   Roles: {profile_data['roles']}")
-            print(f"   Classification: {profile_data['classification_clearance']}")
+            print(f"   Classification: {profile_data['classification_level']}")
             
         else:
             print(f"Profile retrieval failed: {profile_response.status_code}")
