@@ -99,3 +99,30 @@ class UserContext(BaseModel):
     project_ids: List[uuid.UUID] = []
     session_id: Optional[uuid.UUID] = None
     classification_level: classification_type = Field(default=classification_type.internal)
+
+class LoginRequest(BaseModel):
+    """Model for login request"""
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    """Model for login response"""
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int # seconds until expiration
+    user_id: str
+    username: str
+    
+class UserProfileResponse(BaseModel):
+    """Model for user profile response"""
+    user_id: uuid.UUID
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+    department_id: Optional[str] = None
+    department_name: Optional[str] = None
+    roles: List[str] = []
+    classification_level: classification_type = classification_type.internal
+    is_active: bool = True
+    last_login: Optional[datetime] = None
