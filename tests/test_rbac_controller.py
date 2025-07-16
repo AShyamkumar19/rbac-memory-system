@@ -30,7 +30,7 @@ async def test_rbac_controller():
                 project_ids=[uuid.uuid4(), uuid.uuid4()],
                 roles=["CEO"],
                 permissions=[],
-                classification_clearance=classification_type.internal
+                classification_level=classification_type.internal
             )
         },
         {
@@ -44,7 +44,7 @@ async def test_rbac_controller():
                 project_ids=[uuid.uuid4()],
                 roles=["Manager"],
                 permissions=[],
-                classification_clearance=classification_type.internal
+                classification_level=classification_type.internal
             )
         },
         {
@@ -58,7 +58,7 @@ async def test_rbac_controller():
                 project_ids=[uuid.uuid4()],
                 roles=["Employee"],
                 permissions=[],
-                classification_clearance=classification_type.internal
+                classification_level=classification_type.internal
             )
         },
         {
@@ -72,7 +72,7 @@ async def test_rbac_controller():
                 project_ids=[],
                 roles=["Intern"],
                 permissions=[],
-                classification_clearance=classification_type.internal
+                classification_level=classification_type.internal
             )
         }
     ]
