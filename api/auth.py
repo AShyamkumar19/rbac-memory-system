@@ -9,7 +9,7 @@ from config import settings
 import logging
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 @router.post("/login", response_model=LoginResponse)
 async def login(request: LoginRequest, db_client: DatabaseClient = Depends(get_db_client)) -> LoginResponse:
